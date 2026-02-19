@@ -13,6 +13,7 @@ export const ROUTES = {
   CALENDAR: "/calendar",
   FRIENDS: "/friends",
   PROFILE: "/profile",
+  WATCHLIST: "/watchlist",
   NOTIFICATIONS: "/notifications",
   MOVIE: (id: string) => `/movie/${id}`,
 } as const;

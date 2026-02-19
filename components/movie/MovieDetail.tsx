@@ -6,13 +6,14 @@ import { createClient } from "@/lib/supabase/client";
 import { ensureMovieExists } from "@/services/movies";
 import { upsertRating, getUserRating, deleteRating } from "@/services/ratings";
 import { followShow, unfollowShow, isFollowing } from "@/services/follows";
+import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/services/watchlist";
 import { syncEpisodesFromTMDB } from "@/services/episodes";
 import { StarRating } from "./StarRating";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { TMDB_POSTER_LG, TMDB_BACKDROP } from "@/utils/constants";
 import { yearOnly, relativeTime } from "@/utils/formatDate";
-import { Heart, HeartOff } from "lucide-react";
+import { Heart, HeartOff, Bookmark, BookmarkMinus } from "lucide-react";
 import type { TMDBMovieDetail, TMDBTvDetail } from "@/types/tmdb";
 import type { Movie, RatingWithDetails } from "@/types";
 
@@ -31,6 +32,8 @@ export function MovieDetail({ tmdbId, mediaType, details, userId, friendRatings 
   const [saving, setSaving] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [inWatchlist, setInWatchlist] = useState(false);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
   const supabase = createClient();
 
   const title = "title" in details ? details.title : details.name;
@@ -51,6 +54,8 @@ export function MovieDetail({ tmdbId, mediaType, details, userId, friendRatings 
         const isFollow = await isFollowing(supabase, userId, data.id);
         setFollowing(isFollow);
       }
+      const watchlisted = await isInWatchlist(supabase, userId, data.id);
+      setInWatchlist(watchlisted);
     }
   }, [supabase, tmdbId, mediaType, details, userId]);
 
@@ -77,6 +82,19 @@ export function MovieDetail({ tmdbId, mediaType, details, userId, friendRatings 
     setSaving(true);
     await upsertRating(supabase, userId, movie.id, score, comment || null);
     setSaving(false);
+  };
+
+  const handleWatchlist = async () => {
+    if (!movie) return;
+    setWatchlistLoading(true);
+    if (inWatchlist) {
+      await removeFromWatchlist(supabase, userId, movie.id);
+      setInWatchlist(false);
+    } else {
+      await addToWatchlist(supabase, userId, movie.id);
+      setInWatchlist(true);
+    }
+    setWatchlistLoading(false);
   };
 
   const handleFollow = async () => {
@@ -161,6 +179,28 @@ export function MovieDetail({ tmdbId, mediaType, details, userId, friendRatings 
 
         {/* Overview */}
         <p className="mt-4 text-sm text-muted leading-relaxed">{details.overview}</p>
+
+        {/* Watchlist button */}
+        {movie && (
+          <Button
+            variant={inWatchlist ? "secondary" : "primary"}
+            className="mt-4 w-full"
+            onClick={handleWatchlist}
+            disabled={watchlistLoading}
+          >
+            {inWatchlist ? (
+              <>
+                <BookmarkMinus className="h-4 w-4 mr-2" />
+                Remove from Watchlist
+              </>
+            ) : (
+              <>
+                <Bookmark className="h-4 w-4 mr-2" />
+                Add to Watchlist
+              </>
+            )}
+          </Button>
+        )}
 
         {/* Follow button for TV */}
         {mediaType === "tv" && movie && (

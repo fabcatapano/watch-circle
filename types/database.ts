@@ -195,6 +195,42 @@ export interface Database {
           },
         ];
       };
+      watchlist: {
+        Row: {
+          id: string;
+          user_id: string;
+          movie_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          movie_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          movie_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "watchlist_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "watchlist_movie_id_fkey";
+            columns: ["movie_id"];
+            isOneToOne: false;
+            referencedRelation: "movies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       episodes: {
         Row: {
           id: string;

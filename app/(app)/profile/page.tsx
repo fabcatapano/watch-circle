@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { LogOut, Film, User } from "lucide-react";
+import { LogOut, Film, User, Bookmark, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { createClient } from "@/lib/supabase/client";
@@ -106,6 +106,15 @@ function ProfileContent({
           <p className="text-xs text-muted">Avg Rating</p>
         </Card>
       </div>
+
+      {/* Watchlist link */}
+      <Link href="/watchlist" className="mt-4 flex items-center justify-between p-4 bg-card rounded-xl border border-border">
+        <div className="flex items-center gap-3">
+          <Bookmark className="h-5 w-5 text-muted" />
+          <span className="text-sm font-medium text-foreground">My Watchlist</span>
+        </div>
+        <ChevronRight className="h-4 w-4 text-muted" />
+      </Link>
 
       {/* Rated movies */}
       <h3 className="mt-6 text-sm font-semibold text-foreground mb-3">Rated Movies</h3>

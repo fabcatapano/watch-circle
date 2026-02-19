@@ -9,6 +9,7 @@ export type Movie = Database["public"]["Tables"]["movies"]["Row"];
 export type Rating = Database["public"]["Tables"]["ratings"]["Row"];
 export type Friendship = Database["public"]["Tables"]["friendships"]["Row"];
 export type Follow = Database["public"]["Tables"]["follows"]["Row"];
+export type Watchlist = Database["public"]["Tables"]["watchlist"]["Row"];
 export type Episode = Database["public"]["Tables"]["episodes"]["Row"];
 export type Notification = Database["public"]["Tables"]["notifications"]["Row"];
 
@@ -20,6 +21,10 @@ export type RatingWithDetails = Rating & {
 
 export type FriendshipWithProfile = Friendship & {
   profiles: Profile;
+};
+
+export type WatchlistWithMovie = Watchlist & {
+  movies: Movie;
 };
 
 export type EpisodeWithShow = Episode & {
