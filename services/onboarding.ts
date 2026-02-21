@@ -25,22 +25,24 @@ export async function completeOnboarding(
   if (subError) return { error: subError };
 
   // 2. For each selected TV series: fetch details, ensure in DB, create rating
-  for (const series of selectedSeries) {
-    const res = await fetch(`/api/tmdb/tv/${series.id}`);
-    if (!res.ok) continue;
+  await Promise.all(
+    selectedSeries.map(async (series) => {
+      const res = await fetch(`/api/tmdb/tv/${series.id}`);
+      if (!res.ok) return;
 
-    const details: TMDBTvDetail = await res.json();
+      const details: TMDBTvDetail = await res.json();
 
-    const { data: movie, error: movieError } = await ensureMovieExists(
-      supabase,
-      series.id,
-      "tv",
-      details
-    );
-    if (movieError || !movie) continue;
+      const { data: movie, error: movieError } = await ensureMovieExists(
+        supabase,
+        series.id,
+        "tv",
+        details
+      );
+      if (movieError || !movie) return;
 
-    await upsertRating(supabase, userId, movie.id, 5, null);
-  }
+      await upsertRating(supabase, userId, movie.id, 5, null);
+    })
+  );
 
   // 3. Mark onboarding as completed
   const { error: profileError } = await updateProfile(supabase, userId, {

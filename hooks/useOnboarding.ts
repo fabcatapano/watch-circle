@@ -72,14 +72,18 @@ export function useOnboarding(userId: string) {
 
   const finish = useCallback(async () => {
     setSaving(true);
-    const mappedSeries = selectedSeries.map((s) => ({
-      id: s.id,
-      name: s.name ?? s.title ?? "",
-      poster_path: s.poster_path,
-    }));
+    try {
+      const mappedSeries = selectedSeries.map((s) => ({
+        id: s.id,
+        name: s.name ?? s.title ?? "",
+        poster_path: s.poster_path,
+      }));
 
-    await completeOnboarding(supabase, userId, selectedProviderIds, mappedSeries);
-    router.push(ROUTES.FEED);
+      await completeOnboarding(supabase, userId, selectedProviderIds, mappedSeries);
+      router.push(ROUTES.FEED);
+    } catch {
+      setSaving(false);
+    }
   }, [supabase, userId, selectedProviderIds, selectedSeries, router]);
 
   return {
