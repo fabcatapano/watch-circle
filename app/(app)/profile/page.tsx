@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/Card";
 import { StarRating } from "@/components/movie/StarRating";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { StreamingSubscriptions } from "@/components/profile/StreamingSubscriptions";
 import { TMDB_POSTER_SM } from "@/utils/constants";
 
 export default function ProfilePage() {
@@ -115,6 +116,9 @@ function ProfileContent({
         </div>
         <ChevronRight className="h-4 w-4 text-muted" />
       </Link>
+
+      {/* Streaming subscriptions */}
+      <StreamingSubscriptions userId={userId} />
 
       {/* Rated movies */}
       <h3 className="mt-6 text-sm font-semibold text-foreground mb-3">Rated Movies</h3>

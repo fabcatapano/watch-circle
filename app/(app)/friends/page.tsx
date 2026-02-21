@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users } from "lucide-react";
+import { Users, Share2, MessageCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useFriends } from "@/hooks/useFriends";
 import { UserSearchBar } from "@/components/friends/UserSearchBar";
@@ -9,6 +9,7 @@ import { FriendsList } from "@/components/friends/FriendsList";
 import { FriendRequestCard } from "@/components/friends/FriendRequestCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/utils/cn";
 
 type Tab = "friends" | "requests";
@@ -40,6 +41,30 @@ function FriendsContent({
   setTab: (tab: Tab) => void;
 }) {
   const { friends, pending, loading, sendRequest, accept, reject, remove } = useFriends(userId);
+
+  const inviteMessage = "Join me on Watch Circle to track and share movie ratings with friends!";
+  const inviteUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const inviteText = `${inviteMessage}\n${inviteUrl}`;
+
+  function handleWhatsAppInvite() {
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(inviteText)}`,
+      "_blank"
+    );
+  }
+
+  async function handleShareInvite() {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Watch Circle", text: inviteMessage, url: inviteUrl });
+      } catch {
+        // User cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(inviteText);
+      alert("Invite link copied to clipboard!");
+    }
+  }
 
   return (
     <div className="px-4 py-4">
@@ -85,15 +110,29 @@ function FriendsContent({
             ))}
           </div>
         ) : tab === "friends" ? (
-          friends.length > 0 ? (
-            <FriendsList userId={userId} friends={friends} onRemove={remove} />
-          ) : (
-            <EmptyState
-              icon={Users}
-              title="No friends yet"
-              description="Search for users above and send friend requests"
-            />
-          )
+          <>
+            {friends.length > 0 ? (
+              <FriendsList userId={userId} friends={friends} onRemove={remove} />
+            ) : (
+              <>
+                <EmptyState
+                  icon={Users}
+                  title="No friends yet"
+                  description="Search for users above or invite your friends"
+                />
+                <div className="flex gap-3 justify-center -mt-8">
+                  <Button variant="primary" onClick={handleWhatsAppInvite}>
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    WhatsApp
+                  </Button>
+                  <Button variant="secondary" onClick={handleShareInvite}>
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share link
+                  </Button>
+                </div>
+              </>
+            )}
+          </>
         ) : pending.length > 0 ? (
           <div className="space-y-2">
             {pending.map(({ id, profile }) => (

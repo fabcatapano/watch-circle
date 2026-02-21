@@ -10,6 +10,7 @@ export interface Database {
           display_name: string | null;
           avatar_url: string | null;
           bio: string | null;
+          onboarding_completed: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -19,6 +20,7 @@ export interface Database {
           display_name?: string | null;
           avatar_url?: string | null;
           bio?: string | null;
+          onboarding_completed?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -27,6 +29,7 @@ export interface Database {
           display_name?: string | null;
           avatar_url?: string | null;
           bio?: string | null;
+          onboarding_completed?: boolean;
           updated_at?: string;
         };
         Relationships: [];
@@ -269,6 +272,101 @@ export interface Database {
             columns: ["movie_id"];
             isOneToOne: false;
             referencedRelation: "movies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      streaming_providers: {
+        Row: {
+          id: string;
+          tmdb_provider_id: number;
+          name: string;
+          slug: string;
+          logo_path: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tmdb_provider_id: number;
+          name: string;
+          slug: string;
+          logo_path?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          tmdb_provider_id?: number;
+          name?: string;
+          slug?: string;
+          logo_path?: string | null;
+        };
+        Relationships: [];
+      };
+      movie_providers: {
+        Row: {
+          id: string;
+          movie_id: string;
+          provider_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          movie_id: string;
+          provider_id: string;
+          created_at?: string;
+        };
+        Update: {
+          movie_id?: string;
+          provider_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "movie_providers_movie_id_fkey";
+            columns: ["movie_id"];
+            isOneToOne: false;
+            referencedRelation: "movies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "movie_providers_provider_id_fkey";
+            columns: ["provider_id"];
+            isOneToOne: false;
+            referencedRelation: "streaming_providers";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      user_streaming_providers: {
+        Row: {
+          id: string;
+          user_id: string;
+          provider_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          provider_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          provider_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_streaming_providers_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "user_streaming_providers_provider_id_fkey";
+            columns: ["provider_id"];
+            isOneToOne: false;
+            referencedRelation: "streaming_providers";
             referencedColumns: ["id"];
           },
         ];

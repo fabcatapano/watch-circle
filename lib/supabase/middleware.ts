@@ -52,5 +52,28 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Onboarding redirect for authenticated users
+  if (user && !isPublicPath && !pathname.startsWith("/api") && pathname !== "/") {
+    const isOnboarding = pathname.startsWith("/onboarding");
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("id", user.id)
+      .single();
+
+    if (profile && !profile.onboarding_completed && !isOnboarding) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/onboarding";
+      return NextResponse.redirect(url);
+    }
+
+    if (profile?.onboarding_completed && isOnboarding) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/feed";
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }

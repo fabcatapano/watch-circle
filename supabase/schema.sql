@@ -14,6 +14,7 @@ create table public.profiles (
   display_name text,
   avatar_url text,
   bio text,
+  onboarding_completed boolean default false not null,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null
 );
@@ -83,6 +84,34 @@ create table public.episodes (
   unique(movie_id, season_number, episode_number)
 );
 
+-- Streaming Providers (catalog of known providers)
+create table public.streaming_providers (
+  id uuid primary key default gen_random_uuid(),
+  tmdb_provider_id integer unique not null,
+  name text not null,
+  slug text not null,
+  logo_path text,
+  created_at timestamptz default now() not null
+);
+
+-- Movie Providers (many-to-many)
+create table public.movie_providers (
+  id uuid primary key default gen_random_uuid(),
+  movie_id uuid not null references public.movies(id) on delete cascade,
+  provider_id uuid not null references public.streaming_providers(id) on delete cascade,
+  created_at timestamptz default now() not null,
+  unique(movie_id, provider_id)
+);
+
+-- User Streaming Providers (which services each user subscribes to)
+create table public.user_streaming_providers (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  provider_id uuid not null references public.streaming_providers(id) on delete cascade,
+  created_at timestamptz default now() not null,
+  unique(user_id, provider_id)
+);
+
 -- Notifications
 create table public.notifications (
   id uuid primary key default uuid_generate_v4(),
@@ -108,6 +137,10 @@ create index idx_friendships_status on public.friendships(status);
 create index idx_follows_user_id on public.follows(user_id);
 create index idx_episodes_movie_id on public.episodes(movie_id);
 create index idx_episodes_air_date on public.episodes(air_date);
+create index idx_movie_providers_movie_id on public.movie_providers(movie_id);
+create index idx_movie_providers_provider_id on public.movie_providers(provider_id);
+create index idx_user_streaming_providers_user_id on public.user_streaming_providers(user_id);
+create index idx_user_streaming_providers_provider_id on public.user_streaming_providers(provider_id);
 create index idx_notifications_user_id on public.notifications(user_id);
 create index idx_notifications_read on public.notifications(read);
 create index idx_movies_tmdb_id on public.movies(tmdb_id);
@@ -158,6 +191,9 @@ alter table public.ratings enable row level security;
 alter table public.friendships enable row level security;
 alter table public.follows enable row level security;
 alter table public.episodes enable row level security;
+alter table public.streaming_providers enable row level security;
+alter table public.movie_providers enable row level security;
+alter table public.user_streaming_providers enable row level security;
 alter table public.notifications enable row level security;
 
 -- Profiles: anyone can read, users can update own
@@ -225,6 +261,36 @@ create policy "Authenticated users can insert episodes" on public.episodes
 
 create policy "Authenticated users can update episodes" on public.episodes
   for update using (auth.role() = 'authenticated');
+
+-- Streaming providers: anyone can read, authenticated can insert/update
+create policy "Streaming providers are viewable by everyone" on public.streaming_providers
+  for select using (true);
+
+create policy "Authenticated users can insert streaming providers" on public.streaming_providers
+  for insert with check (auth.role() = 'authenticated');
+
+create policy "Authenticated users can update streaming providers" on public.streaming_providers
+  for update using (auth.role() = 'authenticated');
+
+-- Movie providers: anyone can read, authenticated can insert/delete
+create policy "Movie providers are viewable by everyone" on public.movie_providers
+  for select using (true);
+
+create policy "Authenticated users can insert movie providers" on public.movie_providers
+  for insert with check (auth.role() = 'authenticated');
+
+create policy "Authenticated users can delete movie providers" on public.movie_providers
+  for delete using (auth.role() = 'authenticated');
+
+-- User streaming providers: users manage own
+create policy "Users can view own subscriptions" on public.user_streaming_providers
+  for select using (auth.uid() = user_id);
+
+create policy "Users can insert own subscriptions" on public.user_streaming_providers
+  for insert with check (auth.uid() = user_id);
+
+create policy "Users can delete own subscriptions" on public.user_streaming_providers
+  for delete using (auth.uid() = user_id);
 
 -- Notifications: users manage own
 create policy "Users can view own notifications" on public.notifications

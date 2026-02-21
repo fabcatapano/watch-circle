@@ -3,7 +3,18 @@ import type { Database } from "@/types/database";
 
 type Client = SupabaseClient<Database>;
 
-export async function getFriendsFeed(supabase: Client, userId: string, limit = 20, offset = 0) {
+export async function getFriendsFeed(
+  supabase: Client,
+  userId: string,
+  limit = 20,
+  offset = 0,
+  movieIds?: string[] | null
+) {
+  // If movieIds is an empty array, subscriptions are set but no cached movies match
+  if (Array.isArray(movieIds) && movieIds.length === 0) {
+    return { data: [], error: null };
+  }
+
   // Get friend IDs
   const { data: friendships } = await supabase
     .from("friendships")
@@ -19,10 +30,17 @@ export async function getFriendsFeed(supabase: Client, userId: string, limit = 2
     return { data: [], error: null };
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("ratings")
     .select("*, profiles(*), movies(*)")
-    .in("user_id", friendIds)
+    .in("user_id", friendIds);
+
+  // Filter by movie IDs if subscriptions are active
+  if (Array.isArray(movieIds) && movieIds.length > 0) {
+    query = query.in("movie_id", movieIds);
+  }
+
+  const { data, error } = await query
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 

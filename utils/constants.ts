@@ -3,6 +3,7 @@ export const TMDB_POSTER_SM = `${TMDB_IMAGE_BASE}/w342`;
 export const TMDB_POSTER_LG = `${TMDB_IMAGE_BASE}/w500`;
 export const TMDB_BACKDROP = `${TMDB_IMAGE_BASE}/w1280`;
 export const TMDB_STILL = `${TMDB_IMAGE_BASE}/w300`;
+export const TMDB_LOGO = `${TMDB_IMAGE_BASE}/w92`;
 
 export const ROUTES = {
   HOME: "/",
@@ -16,4 +17,5 @@ export const ROUTES = {
   WATCHLIST: "/watchlist",
   NOTIFICATIONS: "/notifications",
   MOVIE: (id: string) => `/movie/${id}`,
+  ONBOARDING: "/onboarding",
 } as const;

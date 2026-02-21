@@ -1,5 +1,5 @@
 export type { Database, Json } from "./database";
-export type { TMDBSearchResult, TMDBSearchResponse, TMDBMovieDetail, TMDBTvDetail, TMDBEpisode, TMDBSeason } from "./tmdb";
+export type { TMDBSearchResult, TMDBSearchResponse, TMDBMovieDetail, TMDBTvDetail, TMDBEpisode, TMDBSeason, TMDBWatchProvider, TMDBWatchProvidersResponse } from "./tmdb";
 
 import type { Database } from "./database";
 
@@ -12,6 +12,9 @@ export type Follow = Database["public"]["Tables"]["follows"]["Row"];
 export type Watchlist = Database["public"]["Tables"]["watchlist"]["Row"];
 export type Episode = Database["public"]["Tables"]["episodes"]["Row"];
 export type Notification = Database["public"]["Tables"]["notifications"]["Row"];
+export type StreamingProvider = Database["public"]["Tables"]["streaming_providers"]["Row"];
+export type MovieProvider = Database["public"]["Tables"]["movie_providers"]["Row"];
+export type UserStreamingProvider = Database["public"]["Tables"]["user_streaming_providers"]["Row"];
 
 // Composite types for UI
 export type RatingWithDetails = Rating & {

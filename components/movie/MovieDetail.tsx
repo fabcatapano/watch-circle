@@ -8,14 +8,15 @@ import { upsertRating, getUserRating, deleteRating } from "@/services/ratings";
 import { followShow, unfollowShow, isFollowing } from "@/services/follows";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/services/watchlist";
 import { syncEpisodesFromTMDB } from "@/services/episodes";
+import { syncMovieProviders, getMovieProviders } from "@/services/streaming";
 import { StarRating } from "./StarRating";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
-import { TMDB_POSTER_LG, TMDB_BACKDROP } from "@/utils/constants";
+import { TMDB_POSTER_LG, TMDB_BACKDROP, TMDB_LOGO } from "@/utils/constants";
 import { yearOnly, relativeTime } from "@/utils/formatDate";
 import { Heart, HeartOff, Bookmark, BookmarkMinus } from "lucide-react";
 import type { TMDBMovieDetail, TMDBTvDetail } from "@/types/tmdb";
-import type { Movie, RatingWithDetails } from "@/types";
+import type { Movie, RatingWithDetails, StreamingProvider } from "@/types";
 
 interface MovieDetailProps {
   tmdbId: number;
@@ -34,6 +35,8 @@ export function MovieDetail({ tmdbId, mediaType, details, userId, friendRatings 
   const [followLoading, setFollowLoading] = useState(false);
   const [inWatchlist, setInWatchlist] = useState(false);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
+  const [providers, setProviders] = useState<StreamingProvider[]>([]);
+  const [providersLoading, setProvidersLoading] = useState(true);
   const supabase = createClient();
 
   const title = "title" in details ? details.title : details.name;
@@ -56,6 +59,16 @@ export function MovieDetail({ tmdbId, mediaType, details, userId, friendRatings 
       }
       const watchlisted = await isInWatchlist(supabase, userId, data.id);
       setInWatchlist(watchlisted);
+
+      // Load cached providers, then sync in background
+      const { data: cached } = await getMovieProviders(supabase, data.id);
+      if (cached.length > 0) setProviders(cached);
+      setProvidersLoading(false);
+
+      syncMovieProviders(data.id, tmdbId, mediaType).then(async () => {
+        const { data: fresh } = await getMovieProviders(supabase, data.id);
+        setProviders(fresh);
+      });
     }
   }, [supabase, tmdbId, mediaType, details, userId]);
 
@@ -179,6 +192,46 @@ export function MovieDetail({ tmdbId, mediaType, details, userId, friendRatings 
 
         {/* Overview */}
         <p className="mt-4 text-sm text-muted leading-relaxed">{details.overview}</p>
+
+        {/* Streaming providers */}
+        <div className="mt-4">
+          <h3 className="text-sm font-semibold text-foreground mb-2">Available on</h3>
+          {providersLoading ? (
+            <div className="flex gap-4 overflow-x-auto">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex flex-col items-center gap-1">
+                  <div className="h-8 w-8 rounded-lg bg-card animate-pulse" />
+                  <div className="h-3 w-12 rounded bg-card animate-pulse" />
+                </div>
+              ))}
+            </div>
+          ) : providers.length > 0 ? (
+            <div className="flex gap-4 overflow-x-auto">
+              {providers.map((p) => (
+                <div key={p.id} className="flex flex-col items-center gap-1 flex-shrink-0">
+                  {p.logo_path ? (
+                    <Image
+                      src={`${TMDB_LOGO}${p.logo_path}`}
+                      alt={p.name}
+                      width={32}
+                      height={32}
+                      className="rounded-lg"
+                    />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-card text-[10px] text-muted">
+                      {p.name.charAt(0)}
+                    </div>
+                  )}
+                  <span className="text-[10px] text-muted text-center max-w-[60px] truncate">
+                    {p.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted/60">Streaming information not available.</p>
+          )}
+        </div>
 
         {/* Watchlist button */}
         {movie && (

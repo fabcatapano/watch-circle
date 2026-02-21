@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getFriendsFeed } from "@/services/ratings";
+import { getFilteredMovieIds } from "@/services/subscriptions";
 import type { RatingWithDetails } from "@/types";
 
 export function useFeed(userId: string) {
@@ -14,7 +15,8 @@ export function useFeed(userId: string) {
   const fetchFeed = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const { data, error } = await getFriendsFeed(supabase, userId);
+    const movieIds = await getFilteredMovieIds(supabase, userId);
+    const { data, error } = await getFriendsFeed(supabase, userId, 20, 0, movieIds);
     if (error) {
       setError(error.message);
     } else {

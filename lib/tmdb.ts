@@ -1,5 +1,5 @@
 import "server-only";
-import type { TMDBSearchResponse, TMDBMovieDetail, TMDBTvDetail, TMDBSeasonDetail } from "@/types/tmdb";
+import type { TMDBSearchResponse, TMDBMovieDetail, TMDBTvDetail, TMDBSeasonDetail, TMDBWatchProvidersResponse } from "@/types/tmdb";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const API_KEY = process.env.TMDB_API_KEY!;
@@ -38,4 +38,8 @@ export async function getTvDetails(id: number): Promise<TMDBTvDetail> {
 
 export async function getTvSeasonEpisodes(tvId: number, seasonNumber: number): Promise<TMDBSeasonDetail> {
   return tmdbFetch<TMDBSeasonDetail>(`/tv/${tvId}/season/${seasonNumber}`);
+}
+
+export async function getWatchProviders(mediaType: "movie" | "tv", id: number): Promise<TMDBWatchProvidersResponse> {
+  return tmdbFetch<TMDBWatchProvidersResponse>(`/${mediaType}/${id}/watch/providers`);
 }
