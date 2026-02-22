@@ -26,6 +26,18 @@ export async function completeOnboardingAction(
     return { error: "Not authenticated. Please refresh and try again." };
   }
 
+  // 0. Ensure profile exists (the handle_new_user trigger should create it on signup)
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile) {
+    console.error("[onboarding] profile missing for user:", user.id);
+    return { error: "Profile not found. Please sign out and sign in again." };
+  }
+
   // 1. Save streaming subscriptions
   const { error: subError } = await setUserSubscriptions(
     supabase,
@@ -34,7 +46,7 @@ export async function completeOnboardingAction(
   );
   if (subError) {
     console.error("[onboarding] setUserSubscriptions failed:", subError);
-    return { error: "Failed to save streaming services." };
+    return { error: `Failed to save streaming services: ${subError.message}` };
   }
 
   // 2. For each selected TV series: fetch TMDB details, save to DB, create rating
