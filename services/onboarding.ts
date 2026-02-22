@@ -28,13 +28,19 @@ export async function completeOnboarding(
 ): Promise<{ error: { message: string } | null }> {
   // 1. Save streaming subscriptions
   const { error: subError } = await setUserSubscriptions(supabase, userId, providerIds);
-  if (subError) return { error: subError };
+  if (subError) {
+    console.error("[onboarding] step 1 – setUserSubscriptions failed:", subError);
+    return { error: subError };
+  }
 
   // 2. For each selected TV series: fetch details, ensure in DB, create rating
   const results = await Promise.allSettled(
     selectedSeries.map(async (series) => {
       const res = await fetchWithTimeout(`/api/tmdb/tv/${series.id}`);
-      if (!res.ok) throw new Error(`Failed to fetch details for ${series.name}`);
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new Error(`TMDB fetch failed for "${series.name}" (${res.status}): ${body}`);
+      }
 
       const details: TMDBTvDetail = await res.json();
 
@@ -44,20 +50,36 @@ export async function completeOnboarding(
         "tv",
         details
       );
-      if (movieError || !movie) throw new Error(`Failed to save ${series.name}`);
+      if (movieError || !movie) {
+        console.error("[onboarding] ensureMovieExists failed:", movieError);
+        throw new Error(`Failed to save ${series.name}`);
+      }
 
-      await upsertRating(supabase, userId, movie.id, 5, null);
+      const { error: ratingError } = await upsertRating(supabase, userId, movie.id, 5, null);
+      if (ratingError) {
+        console.error("[onboarding] upsertRating failed:", ratingError);
+        throw new Error(`Failed to rate ${series.name}`);
+      }
     })
   );
 
+  const rejected = results.filter((r) => r.status === "rejected") as PromiseRejectedResult[];
+  if (rejected.length > 0) {
+    console.error("[onboarding] step 2 – series failures:", rejected.map((r) => r.reason?.message));
+  }
+
   // If all series failed, report an error
-  const allFailed = results.every((r) => r.status === "rejected");
-  if (allFailed) return { error: { message: "Failed to save series. Please try again." } };
+  if (rejected.length === results.length) {
+    return { error: { message: rejected[0]?.reason?.message || "Failed to save series." } };
+  }
 
   // 3. Mark onboarding as completed
   const { error: profileError } = await updateProfile(supabase, userId, {
     onboarding_completed: true,
   });
+  if (profileError) {
+    console.error("[onboarding] step 3 – updateProfile failed:", profileError);
+  }
 
   return { error: profileError };
 }

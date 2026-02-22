@@ -27,7 +27,7 @@ export async function ensureMovieExists(
         backdrop_path: details.backdrop_path,
         release_date: releaseDate,
         vote_average: details.vote_average,
-        genres: details.genres.map((g) => g.name),
+        genres: details.genres?.map((g) => g.name) ?? [],
         runtime,
         number_of_seasons: numberOfSeasons,
         updated_at: new Date().toISOString(),

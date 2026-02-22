@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getAllProviders } from "@/services/subscriptions";
-import { completeOnboarding } from "@/services/onboarding";
+import { completeOnboardingAction } from "@/app/onboarding/actions";
 import { ROUTES } from "@/utils/constants";
 import type { StreamingProvider, TMDBSearchResult } from "@/types";
 
@@ -81,18 +81,19 @@ export function useOnboarding(userId: string) {
         poster_path: s.poster_path,
       }));
 
-      const { error } = await completeOnboarding(supabase, userId, selectedProviderIds, mappedSeries);
+      const { error } = await completeOnboardingAction(selectedProviderIds, mappedSeries);
       if (error) {
-        setError("Something went wrong. Please try again.");
+        setError(error);
         setSaving(false);
         return;
       }
       router.push(ROUTES.FEED);
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      console.error("Onboarding exception:", err);
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
       setSaving(false);
     }
-  }, [supabase, userId, selectedProviderIds, selectedSeries, router]);
+  }, [selectedProviderIds, selectedSeries, router]);
 
   return {
     step,
