@@ -20,6 +20,7 @@ export function useOnboarding(userId: string) {
   const [selectedSeries, setSelectedSeries] = useState<TMDBSearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     getAllProviders(supabase).then(({ data }) => {
@@ -72,6 +73,7 @@ export function useOnboarding(userId: string) {
 
   const finish = useCallback(async () => {
     setSaving(true);
+    setError(null);
     try {
       const mappedSeries = selectedSeries.map((s) => ({
         id: s.id,
@@ -79,9 +81,15 @@ export function useOnboarding(userId: string) {
         poster_path: s.poster_path,
       }));
 
-      await completeOnboarding(supabase, userId, selectedProviderIds, mappedSeries);
+      const { error } = await completeOnboarding(supabase, userId, selectedProviderIds, mappedSeries);
+      if (error) {
+        setError("Something went wrong. Please try again.");
+        setSaving(false);
+        return;
+      }
       router.push(ROUTES.FEED);
     } catch {
+      setError("Something went wrong. Please try again.");
       setSaving(false);
     }
   }, [supabase, userId, selectedProviderIds, selectedSeries, router]);
@@ -93,6 +101,7 @@ export function useOnboarding(userId: string) {
     selectedSeries,
     loading,
     saving,
+    error,
     canAdvanceFromStep1,
     canAdvanceFromStep2,
     next,

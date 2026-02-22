@@ -11,6 +11,7 @@ interface CompletionStepProps {
   selectedProviderIds: string[];
   selectedSeries: TMDBSearchResult[];
   saving: boolean;
+  error: string | null;
   onFinish: () => void;
   onBack: () => void;
 }
@@ -20,6 +21,7 @@ export function CompletionStep({
   selectedProviderIds,
   selectedSeries,
   saving,
+  error,
   onFinish,
   onBack,
 }: CompletionStepProps) {
@@ -104,6 +106,9 @@ export function CompletionStep({
 
       {/* Finish button */}
       <div className="py-4">
+        {error && (
+          <p className="text-sm text-red-400 text-center mb-3">{error}</p>
+        )}
         <button
           onClick={onFinish}
           disabled={saving}

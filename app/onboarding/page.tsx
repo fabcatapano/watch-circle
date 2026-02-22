@@ -39,6 +39,7 @@ function OnboardingFlow({ userId }: { userId: string }) {
     selectedSeries,
     loading,
     saving,
+    error,
     canAdvanceFromStep1,
     canAdvanceFromStep2,
     next,
@@ -95,6 +96,7 @@ function OnboardingFlow({ userId }: { userId: string }) {
           selectedProviderIds={selectedProviderIds}
           selectedSeries={selectedSeries}
           saving={saving}
+          error={error}
           onFinish={finish}
           onBack={back}
         />
